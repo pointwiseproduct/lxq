@@ -1,0 +1,45 @@
+<lexer> mylexer{
+    mul = "\*";
+    div = "/";
+    add = "\+";
+    sub = "\-";
+    l_paren = "\(";
+    r_paren = "\)";
+    semicolon = ";";
+    recover = "recover";
+
+    [make_id]
+    id = "[0-9]+";
+
+    [drop]
+    space = " +";
+}
+
+<token> mytoken{
+    <right>{ unary_minus; }
+    <left>{
+        mul, div;
+        add, sub;
+    }
+    l_paren, r_paren, recover, semicolon;
+    id;
+}
+
+<lr> myparser{
+    Lines
+        : [print]   Lines E(0) semicolon
+        | []        Lines semicolon
+        | [recover] error recover semicolon
+        | []
+        ;
+
+    E
+        : [make_add] E(0) add E(1)
+        | [make_sub] E(0) sub E(1)
+        | [make_mlt] E(0) mul E(1)
+        | [make_div] E(0) div E(1)
+        | [identity] l_paren E(0) r_paren
+        | [make_inv] <unary_minus> sub E(0)
+        | [identity] id(0)
+        ;
+}
