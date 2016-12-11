@@ -647,26 +647,6 @@ public:
         }
     }
 
-    void make_lr1_goto_map(grammar const &g, term_set const &h, states const &c_prime, states const &c){
-        term_set k;
-        for(auto const &r : g){
-            k.insert(r.first);
-        }
-        for(items const &s : c_prime){
-            auto f = [&](term_set const &ts){
-                for(term const &t : ts){
-                    items n_goto = lr1_goto(g, s, t);
-                    if(n_goto.empty()){
-                        continue;
-                    }
-                    s.goto_map[t] = &*c.find(n_goto);
-                }
-            };
-            f(h);
-            f(k);
-        }
-    }
-
     static void make_lalr_goto_map(grammar const &g, term_set const &h, states const &c_prime, states const &c, item const &start){
         term_set k;
         for(auto const &r : g){
