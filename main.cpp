@@ -2,11 +2,18 @@
 #include "automaton_lexer.hpp"
 
 int main(/*int argc, char *argv[]*/){
+<<<<<<< HEAD
     int argc = 3;
     const char *argv[] = {
         "",
         "./test/test.lxq",
 		"./test/"
+=======
+    int argc = 2;
+    const char *argv[] = {
+        "",
+        "./test/test.lxq"
+>>>>>>> origin/master
     };
 
     if(argc != 2 && argc != 3){
