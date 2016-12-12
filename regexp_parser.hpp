@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <cassert>
 #include <vector>
+#include "automaton_lexer.hpp"
 
 namespace regexp_parser{
 

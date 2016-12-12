@@ -180,12 +180,12 @@ namespace scanner{
             right
         };
 
-		enum class parser_algorithms{
-			lalr,
-			lr
-		};
+        enum class parser_algorithms{
+            lalr,
+            lr
+        };
 
-		parser_algorithms parser_algorithm;
+        parser_algorithms parser_algorithm;
 
         std::vector<ast*> ast_stack;
         ast const
@@ -331,7 +331,7 @@ namespace scanner{
 
     void init_lexer(lexer &lex);
     void init_grammar(scanner::grammar &grammar);
-    void scan(const std::string ifile_path, std::string out_path);
+    void scan(const char *ifile_path, std::string out_path);
 } // namespace scanner
 
 #endif // SCANNER_HPP_

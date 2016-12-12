@@ -90,10 +90,10 @@ public:
         }
 
         bool equal(item const &other) const{
-			return
-				lhs == other.lhs &&
-				rhs == other.rhs &&
-				pos == other.pos;
+            return
+                lhs == other.lhs &&
+                rhs == other.rhs &&
+                pos == other.pos;
         }
     };
 
@@ -570,7 +570,7 @@ public:
         return i;
     }
 
-	items lr1_goto(grammar const &g, items const &i, term const &x){
+    items lr1_goto(grammar const &g, items const &i, term const &x){
         items j;
         for(auto iter = i.begin(); iter != i.end(); ++iter){
             if(iter->is_over()){
@@ -589,8 +589,8 @@ public:
         {
             items init;
             init.insert(start);
-			first_state = c.insert(lr1_closure(g, init)).first;
-			first_item = first_state->find(start);
+            first_state = c.insert(lr1_closure(g, init)).first;
+            first_item = first_state->find(start);
         }
         std::size_t s;
         auto f = [&](const items &n){
@@ -633,7 +633,7 @@ public:
     static void lr0_kernel_items(grammar const &g, states &c_prime, states &c, typename states::iterator &first_state, term_set const &terminal_symbol_set, item const &start){
         c_prime = lr0_items(g, terminal_symbol_set, start);
         for(items const &i : c_prime){
-            std::pair<states::iterator, bool> p = c.insert(kernel_filter(i, start));
+            std::pair<typename states::iterator, bool> p = c.insert(kernel_filter(i, start));
             p.first->mirror = &i;
             i.mirror = &*p.first;
             if(

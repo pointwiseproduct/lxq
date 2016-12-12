@@ -207,16 +207,16 @@ namespace scanner{
 
         semantic_type grammar_header = [eat](term_type term, arg_type const &arg, scanning_data_type &data){
             token_type t = eat(term, arg, data);
-			if(
-				data.ast_stack.back()->nodes[1]->token.value.to_str() == "parser"
-				|| data.ast_stack.back()->nodes[1]->token.value.to_str() == "lalr"
-			){
-				data.parser_algorithm = scanning_data_type::parser_algorithms::lalr;
-			}else if(
-				data.ast_stack.back()->nodes[1]->token.value.to_str() == "lr"
-			){
-				data.parser_algorithm = scanning_data_type::parser_algorithms::lr;
-			}else{
+            if(
+                data.ast_stack.back()->nodes[1]->token.value.to_str() == "parser"
+                || data.ast_stack.back()->nodes[1]->token.value.to_str() == "lalr"
+            ){
+                data.parser_algorithm = scanning_data_type::parser_algorithms::lalr;
+            }else if(
+                data.ast_stack.back()->nodes[1]->token.value.to_str() == "lr"
+            ){
+                data.parser_algorithm = scanning_data_type::parser_algorithms::lr;
+            }else{
                 throw std::runtime_error("incorrect parser header.");
             }
             return t;

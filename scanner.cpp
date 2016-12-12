@@ -70,7 +70,7 @@ namespace scanner{
         lex.new_regex("\\)", r_round_paren);
         lex.new_regex("\\|", vertical_bar);
         lex.new_regex("=", equal);
-		lex.new_regex(R"text(("([^\\"]|\\.)*?")|(_\".*\"_))text", string);
+        lex.new_regex(R"text(("([^\\"]|\\.)*?")|(_\".*\"_))text", string);
         lex.new_regex("[a-zA-Z_][a-zA-Z0-9_]*", identifier);
     }
 
@@ -601,58 +601,58 @@ namespace scanner{
             }
         }
 
-		lalr_generator_type::items::iterator first_item;
-		if(parser_algorithm == parser_algorithms::lalr){
-			lalr_generator.lr0_kernel_items(lalr_generator.grammar, states_prime, states, first_state, terminal_symbol_set, s);
-			lalr_generator.make_lalr_goto_map(lalr_generator.grammar, terminal_symbol_set, states_prime, states, s);
-			lalr_generator.completion_lookahead(lalr_generator.grammar, states, first_state, s);
-			states_prime.clear();
-			states = lalr_generator.c_closure(lalr_generator.grammar, states, first_state, first_item);
-			lalr_generator_make_result = lalr_generator.make2(lalr_generator.grammar, states, first_state, *first_item, lalr_generator.symbol_data_map);
-		}else if(parser_algorithm == parser_algorithms::lr){
-			s.lookahead.insert(eos_functor()());
-			lalr_generator.lr1_items(lalr_generator.grammar, states, first_state, first_item, terminal_symbol_set, s);
-			lalr_generator_make_result = lalr_generator.make2(lalr_generator.grammar, states, first_state, *first_item, lalr_generator.symbol_data_map);
-		}
-		if(lalr_generator_make_result.conflict_set.size() > 0){
-			lalr_generator_type::exception_seq exception_seq;
-			for(auto &i : lalr_generator_make_result.conflict_set){
-				std::string act_str[2];
-				lalr_generator_type::lr_parsing_table_item::enum_action act[2] = {
-					i.lhs.action,
-					i.rhs.action
-				};
-				for(int n = 0; n < 2; ++n){
-					switch(act[n]){
-					case lalr_generator_type::lr_parsing_table_item::enum_action::accept:
-						act_str[n] = "acc";
-						break;
+        lalr_generator_type::items::iterator first_item;
+        if(parser_algorithm == parser_algorithms::lalr){
+            lalr_generator.lr0_kernel_items(lalr_generator.grammar, states_prime, states, first_state, terminal_symbol_set, s);
+            lalr_generator.make_lalr_goto_map(lalr_generator.grammar, terminal_symbol_set, states_prime, states, s);
+            lalr_generator.completion_lookahead(lalr_generator.grammar, states, first_state, s);
+            states_prime.clear();
+            states = lalr_generator.c_closure(lalr_generator.grammar, states, first_state, first_item);
+            lalr_generator_make_result = lalr_generator.make2(lalr_generator.grammar, states, first_state, *first_item, lalr_generator.symbol_data_map);
+        }else if(parser_algorithm == parser_algorithms::lr){
+            s.lookahead.insert(eos_functor()());
+            lalr_generator.lr1_items(lalr_generator.grammar, states, first_state, first_item, terminal_symbol_set, s);
+            lalr_generator_make_result = lalr_generator.make2(lalr_generator.grammar, states, first_state, *first_item, lalr_generator.symbol_data_map);
+        }
+        if(lalr_generator_make_result.conflict_set.size() > 0){
+            lalr_generator_type::exception_seq exception_seq;
+            for(auto &i : lalr_generator_make_result.conflict_set){
+                std::string act_str[2];
+                lalr_generator_type::lr_parsing_table_item::enum_action act[2] = {
+                    i.lhs.action,
+                    i.rhs.action
+                };
+                for(int n = 0; n < 2; ++n){
+                    switch(act[n]){
+                    case lalr_generator_type::lr_parsing_table_item::enum_action::accept:
+                        act_str[n] = "acc";
+                        break;
 
-					case lalr_generator_type::lr_parsing_table_item::enum_action::shift:
-						act_str[n] = "sft";
-						break;
+                    case lalr_generator_type::lr_parsing_table_item::enum_action::shift:
+                        act_str[n] = "sft";
+                        break;
 
-					case lalr_generator_type::lr_parsing_table_item::enum_action::reduce:
-						act_str[n] = "rdc";
-						break;
-					}
-				}
-				std::string item_str[2];
-				lalr_generator_type::item const *item[] = { i.lhs.item_ptr, i.rhs.item_ptr };
-				for(int j = 0; j < 2; ++j){
-					for(auto &s : item[j]->rhs){
-						item_str[j] += " " + lalr_generator.symbol_manager.to_str(s).to_str();
-					}
-				}
-				exception_seq.push_back(
-					std::runtime_error(
-						act_str[0] + "/" + act_str[1] + " conflict, " +
-						lalr_generator.symbol_manager.to_str(i.lhs.item_ptr->lhs).to_str() + " :" + item_str[0] + " vs " + lalr_generator.symbol_manager.to_str(i.rhs.item_ptr->lhs).to_str() + " :" + item_str[1] + "."
-					)
-				);
-			}
-			throw exception_seq;
-		}
+                    case lalr_generator_type::lr_parsing_table_item::enum_action::reduce:
+                        act_str[n] = "rdc";
+                        break;
+                    }
+                }
+                std::string item_str[2];
+                lalr_generator_type::item const *item[] = { i.lhs.item_ptr, i.rhs.item_ptr };
+                for(int j = 0; j < 2; ++j){
+                    for(auto &s : item[j]->rhs){
+                        item_str[j] += " " + lalr_generator.symbol_manager.to_str(s).to_str();
+                    }
+                }
+                exception_seq.push_back(
+                    std::runtime_error(
+                        act_str[0] + "/" + act_str[1] + " conflict, " +
+                        lalr_generator.symbol_manager.to_str(i.lhs.item_ptr->lhs).to_str() + " :" + item_str[0] + " vs " + lalr_generator.symbol_manager.to_str(i.rhs.item_ptr->lhs).to_str() + " :" + item_str[1] + "."
+                    )
+                );
+            }
+            throw exception_seq;
+        }
     }
 
     std::vector<vstring_range> make_signature(
@@ -1002,7 +1002,7 @@ namespace lxq{
                     arg.reserve(norm);
                     for(std::size_t i = 0; i < norm; ++i){
                         arg.push_back(std::unique_ptr<semantic_data>(nullptr));
-                        arg.back().swap(std::move(value_stack[value_stack.size() - norm + i]));
+                        arg.back().swap(value_stack[value_stack.size() - norm + i]);
                     }
                     value_stack.resize(value_stack.size() - norm);
                     value_stack.push_back(std::move(p.second.second.call(*this, arg)));
@@ -1051,7 +1051,7 @@ namespace lxq{
         }
     }
 
-    void scan(const std::string ifile_path, std::string out_path){
+    void scan(const char *ifile_path, std::string out_path){
         try{
             scanner::grammar grammar;
             init_grammar(grammar);
@@ -1079,8 +1079,8 @@ namespace lxq{
                 throw std::runtime_error("bootstrap parser parsing error.");
             }
 
-            std::ifstream ifile(ifile_path, std::ios::binary);
-            if(!ifile){
+            std::ifstream ifile(ifile_path);
+            if(ifile.fail()){
                 throw std::runtime_error("cannot open input file.");
             }
 

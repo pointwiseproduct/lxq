@@ -7,43 +7,25 @@ namespace regexp_parser{
         int type;
     };
 
-    class regexp_ast{
-    public:
-        regexp_ast() = default;
-        regexp_ast(const char c) : c(c){}
-        regexp_ast(const regexp_ast &other) : c(other.c){
-            for(auto &iter : other.node_vec){
-                node_vec.push_back(iter->clone());
-            }
+    regexp_ast::regexp_ast(const char c) : c(c){}
+    regexp_ast::regexp_ast(const regexp_ast &other) : c(other.c){
+        for(auto &iter : other.node_vec){
+            node_vec.push_back(iter->clone());
         }
+    }
 
-        regexp_ast(regexp_ast &&other) : c(std::move(other.c)), node_vec(std::move(other.node_vec)){}
+    regexp_ast::regexp_ast(regexp_ast &&other) : c(std::move(other.c)), node_vec(std::move(other.node_vec)){}
 
-        virtual ~regexp_ast(){
-            for(auto &iter : node_vec){
-                delete iter;
-            }
+    regexp_ast::~regexp_ast(){
+        for(auto &iter : node_vec){
+            delete iter;
         }
+    }
 
-        virtual std::size_t to_NFA(std::size_t start, automaton::node_pool &pool) const{
-            assert(false);
-            return (std::numeric_limits<std::size_t>::max)();
-        }
-
-        virtual regexp_ast *clone() const = 0;
-        template<class Derived>
-        regexp_ast *clone_impl() const{
-            regexp_ast *ptr = new Derived;
-            ptr->c = c;
-            for(auto &iter : node_vec){
-                ptr->node_vec.push_back(iter->clone());
-            }
-            return ptr;
-        }
-
-        char c;
-        std::vector<regexp_ast*> node_vec;
-    };
+    std::size_t regexp_ast::to_NFA(std::size_t start, automaton::node_pool &pool) const{
+        assert(false);
+        return (std::numeric_limits<std::size_t>::max)();
+    }
 
     class regexp_union : public regexp_ast{
     public:
@@ -606,6 +588,7 @@ namespace regexp_parser{
 
 
 namespace automaton{
+    node::node() : edge(), token_name(new std::string()), action(new std::string()){}
     node::node(const node &other) : edge(other.edge), token_name(new std::string(*other.token_name)), action(new std::string(*other.action)){}
     node::node(node &&other) : edge(std::move(other.edge)), token_name(std::move(other.token_name)), action(std::move(other.action)){}
 
@@ -659,62 +642,62 @@ namespace automaton{
         return s;
     }
 
-    node_pool NFA_to_DFA(const node_pool &pool){
-        node_pool trans;
-        {
-            std::set<char> sigma = collect_char(pool);
-            std::vector<std::set<std::size_t>> states = { {}, { closure(pool, { 0 }) } };
-            std::size_t p = 1, j = 0;
-            while(j <= p){
-                for(char c : sigma){
-                    if(c == '\0'){
-                        continue;
-                    }
-                    std::set<std::size_t> e = DFA_edge(pool, states[j], c);
-                    bool find = false;
-                    std::size_t i;
-                    for(i = 0; i <= p; ++i){
-                        if(e == states[i]){
-                            find = true;
-                            break;
-                        }
-                    }
+	node_pool NFA_to_DFA(const node_pool &old_pool){
+		node_pool trans;
+		{
+			std::set<char> sigma = collect_char(old_pool);
+			std::vector<std::set<std::size_t>> states = { {},{ closure(old_pool, { 0 }) } };
+			std::size_t p = 1, j = 0;
+			while(j <= p){
+				for(char c : sigma){
+					if(c == '\0'){
+						continue;
+					}
+					std::set<std::size_t> e = DFA_edge(old_pool, states[j], c);
+					bool find = false;
+					std::size_t i;
+					for(i = 0; i <= p; ++i){
+						if(e == states[i]){
+							find = true;
+							break;
+						}
+					}
 
-                    auto check_ender_tokens = [&](std::size_t i){
-                        if(i > 0){
-                            trans[j].edge.push_back(std::make_pair(c, i));
-                        }
-                        for(std::size_t n : states[j]){
-                            if(pool[n].token_name){
-                                trans[j].token_name.reset(new std::string(*pool[n].token_name));
-                                trans[j].action.reset(new std::string(*pool[n].action));
-                                break;
-                            }
-                        }
-                    };
+					auto check_ender_tokens = [&](std::size_t i){
+						if(i > 0){
+							trans[j].edge.push_back(std::make_pair(c, i));
+						}
+						for(std::size_t n : states[j]){
+							if(old_pool[n].token_name && !old_pool[n].token_name->empty()){
+								trans[j].token_name.reset(new std::string(*old_pool[n].token_name));
+								trans[j].action.reset(new std::string(*old_pool[n].action));
+								break;
+							}
+						}
+					};
 
-                    if(find){
-                        if(trans.size() <= j){
-                            trans.resize(j + 1);
-                        }
-                        check_ender_tokens(i);
-                    }else{
-                        ++p;
-                        if(states.size() <= p){
-                            states.resize(p + 1);
-                        }
-                        states[p] = e;
-                        if(trans.size() <= j){
-                            trans.resize(j + 1);
-                        }
-                        check_ender_tokens(p);
-                    }
-                }
-                ++j;
-            }
-        }
-        return trans;
-    }
+					if(find){
+						if(trans.size() <= j){
+							trans.resize(j + 1);
+						}
+						check_ender_tokens(i);
+					} else{
+						++p;
+						if(states.size() <= p){
+							states.resize(p + 1);
+						}
+						states[p] = e;
+						if(trans.size() <= j){
+							trans.resize(j + 1);
+						}
+						check_ender_tokens(p);
+					}
+				}
+				++j;
+			}
+		}
+		return trans;
+	}
 
     lexer::parsing_error::parsing_error(const std::string &what) : std::runtime_error(what){}
 
@@ -886,21 +869,21 @@ namespace automaton{
         token_info_vector.push_back(token_info{ token_name, action });
 
         std::size_t end;
-        if(node_pool.empty()){
-            node_pool.push_back({});
-            end = root->to_NFA(0, node_pool);
+        if(pool.empty()){
+            pool.push_back({});
+            end = root->to_NFA(0, pool);
         }else{
-            std::size_t start = node_pool.size();
-            node_pool[0].edge.push_back(std::make_pair('\0', start));
-            node_pool.resize(start + 1);
-            end = root->to_NFA(start, node_pool);
+            std::size_t start = pool.size();
+            pool[0].edge.push_back(std::make_pair('\0', start));
+            pool.resize(start + 1);
+            end = root->to_NFA(start, pool);
         }
-        node_pool[end].token_name.reset(new std::string(token_name));
-        node_pool[end].action.reset(new std::string(action));
+        pool[end].token_name.reset(new std::string(token_name));
+        pool[end].action.reset(new std::string(action));
     }
 
     void lexer::build(){
-        node_pool = automaton::NFA_to_DFA(node_pool);
+        pool = automaton::NFA_to_DFA(pool);
         optimize();
     }
 
@@ -909,7 +892,7 @@ namespace automaton{
 
         // include guard.
         std::string include_guard = lexer_namespace;
-        std::transform(include_guard.begin(), include_guard.end(), include_guard.begin(), std::toupper);
+        std::transform(include_guard.begin(), include_guard.end(), include_guard.begin(), [](char c){ return static_cast<char>(std::toupper(c)); });
         include_guard += "_HPP_";
         ofile << indent() << "#ifndef " << include_guard << "\n";
         ofile << indent() << "#define " << include_guard << "\n\n";
@@ -954,7 +937,7 @@ namespace automaton{
         ofile << indent() << "std::unique_ptr<lxq::semantic_data> value;\n";
         --indent;
         ofile << indent() << "};\n\n";
-		ofile << indent() << "using iterator = Iter;\n\n";
+        ofile << indent() << "using iterator = Iter;\n\n";
 
         // tokenize function.
         ofile << indent() << "template<class Action>\n";
@@ -965,14 +948,14 @@ namespace automaton{
         ofile << indent() << "std::size_t line_num = 0, char_num = 0, word_num = 0;\n";
         ofile << indent() << "char c;\n\n";
 
-        for(std::size_t i = 1; i < node_pool.size(); ++i){
+        for(std::size_t i = 1; i < pool.size(); ++i){
             if(unused_node_set.find(i) != unused_node_set.end()){
                 continue;
             }
 
             std::map<std::size_t, std::set<int>> edge_inv_map;
             std::map<std::size_t, std::set<int>> other_edge_inv_map;
-            for(auto &j : node_pool[i].edge){
+            for(auto &j : pool[i].edge){
                 if(j.first >= -128 && j.first <= 127){
                     edge_inv_map[j.second].insert(j.first);
                 }else{
@@ -987,19 +970,19 @@ namespace automaton{
                 ofile << indent() << "goto end_of_tokenize;\n";
                 --indent;
                 ofile << indent() << "}\n";
-            }else if(node_pool[i].token_name){
+            }else if(pool[i].token_name && !pool[i].token_name->empty()){
                 ofile << indent() << "if(iter == end){\n";
                 ++indent;
-                if(*node_pool[i].action != "drop"){
+                if(*pool[i].action != "drop"){
                     ofile << indent() << "token_type t;\n";
                     ofile << indent() << "t.first = first;\n";
                     ofile << indent() << "t.last = iter;\n";
                     ofile << indent() << "t.line_num = line_num;\n";
                     ofile << indent() << "t.char_num = char_num;\n";
                     ofile << indent() << "t.word_num = word_num++;\n";
-                    ofile << indent() << "t.identifier = token_type::identifier_type::" << *node_pool[i].token_name << ";\n";
-                    if(node_pool[i].action->size() > 0){
-                        ofile << indent() << "t.value = std::move(std::unique_ptr<lxq::semantic_data>(action." << *node_pool[i].action << "(first, iter)));\n";
+                    ofile << indent() << "t.identifier = token_type::identifier_type::" << *pool[i].token_name << ";\n";
+                    if(pool[i].action->size() > 0){
+                        ofile << indent() << "t.value = std::move(std::unique_ptr<lxq::semantic_data>(action." << *pool[i].action << "(first, iter)));\n";
                     }
                     ofile << indent() << "result.push_back(std::move(t));\n";
                 }
@@ -1014,7 +997,7 @@ namespace automaton{
                 ofile << indent() << "}\n";
             }
 
-            if(node_pool[i].edge.size() > 0){
+            if(pool[i].edge.size() > 0){
                 ofile << indent() << "c = *iter;\n";
                 ofile << indent() << "switch(c){\n";
                 for(auto &j : edge_inv_map){
@@ -1030,45 +1013,45 @@ namespace automaton{
                     if((j.second.size()) % 8 != 0){
                         ofile << "\n";
                     }
-                    ++indent;
-                    if(nline){
-                        if(j.second.size() > 1){
-                            ofile << indent() << "if(c == " << static_cast<int>('\n') << "){\n";
-                            ++indent;
-                        }
+					++indent;
+					if(nline){
+						if(j.second.size() > 1){
+							ofile << indent() << "if(c == " << static_cast<int>('\n') << "){\n";
+							++indent;
+						}
 
-                        ofile << indent() << "char_num = 0;\n";
-                        ofile << indent() << "word_num = 0;\n";
-                        ofile << indent() << "++line_num;\n";
+						ofile << indent() << "char_num = 0;\n";
+						ofile << indent() << "word_num = 0;\n";
+						ofile << indent() << "++line_num;\n";
 
-                        if(j.second.size() > 1){
-                            --indent;
-                            ofile << indent() << "}\n";
-                        }
-                    }
-                    ofile << indent() << "++char_num;\n";
-                    ofile << indent() << "++iter;\n";
-                    ofile << indent() << "goto state_" << j.first << ";\n";
-                    --indent;
+						if(j.second.size() > 1){
+							--indent;
+							ofile << indent() << "}\n";
+						}
+					}
+					ofile << indent() << "++char_num;\n";
+					ofile << indent() << "++iter;\n";
+					ofile << indent() << "goto state_" << j.first << ";\n";
+					--indent;
                 }
                 ofile << indent() << "}\n";
             }
 
             if(i == 1){
                 ofile << indent() << "throw std::runtime_error(\"lexical error : state 1\");\n\n";
-            }else if(node_pool[i].token_name){
+            }else if(pool[i].token_name && !pool[i].token_name->empty()){
                 ofile << indent() << "{\n";
                 ++indent;
-                if(*node_pool[i].action != "drop"){
+                if(*pool[i].action != "drop"){
                     ofile << indent() << "token_type t;\n";
                     ofile << indent() << "t.first = first;\n";
                     ofile << indent() << "t.last = iter;\n";
                     ofile << indent() << "t.line_num = line_num;\n";
                     ofile << indent() << "t.char_num = char_num;\n";
                     ofile << indent() << "t.word_num = word_num++;\n";
-                    ofile << indent() << "t.identifier = token_type::identifier_type::" << *node_pool[i].token_name << ";\n";
-                    if(node_pool[i].action->size() > 0){
-                        ofile << indent() << "t.value = std::move(std::unique_ptr<lxq::semantic_data>(action." << *node_pool[i].action << "(first, iter)));\n";
+                    ofile << indent() << "t.identifier = token_type::identifier_type::" << *pool[i].token_name << ";\n";
+                    if(pool[i].action->size() > 0){
+                        ofile << indent() << "t.value = std::move(std::unique_ptr<lxq::semantic_data>(action." << *pool[i].action << "(first, iter)));\n";
                     }
                     ofile << indent() << "result.push_back(std::move(t));\n";
                 }
@@ -1112,25 +1095,25 @@ namespace automaton{
         bool mod;
         do{
             mod = false;
-            for(std::size_t i = 0; i < node_pool.size(); ++i){
+            for(std::size_t i = 0; i < pool.size(); ++i){
                 node node_i;
                 edge edge_i;
-                for(auto &a : node_pool[i].edge){
+                for(auto &a : pool[i].edge){
                     edge_i.insert(a);
                 }
                 node_i.insert(std::move(edge_i));
 
-                for(std::size_t j = i + 1; j < node_pool.size(); ++j){
+                for(std::size_t j = i + 1; j < pool.size(); ++j){
                     if(
-                        node_pool[i].token_name && !node_pool[j].token_name ||
-                        !node_pool[i].token_name && node_pool[j].token_name ||
-                        node_pool[i].token_name != node_pool[j].token_name
-                        ){
+                        pool[i].token_name && !pool[j].token_name ||
+                        !pool[i].token_name && pool[j].token_name ||
+                        pool[i].token_name != pool[j].token_name
+                    ){
                         mod = inequality_pair_set.insert(std::make_pair(i, j)).second || mod;
                     }else{
                         node node_j;
                         edge edge_j;
-                        for(auto &a : node_pool[j].edge){
+                        for(auto &a : pool[j].edge){
                             edge_j.insert(a);
                         }
                         node_j.insert(std::move(edge_j));
@@ -1144,8 +1127,8 @@ namespace automaton{
         }while(mod);
 
         std::map<std::size_t, std::size_t> equality_pair_map;
-        for(std::size_t i = 0; i < node_pool.size(); ++i){
-            for(std::size_t j = i + 1; j < node_pool.size(); ++j){
+        for(std::size_t i = 0; i < pool.size(); ++i){
+            for(std::size_t j = i + 1; j < pool.size(); ++j){
                 if(inequality_pair_set.find(std::make_pair(i, j)) != inequality_pair_set.end()){
                     continue;
                 }else{
@@ -1154,7 +1137,7 @@ namespace automaton{
             }
         }
 
-        for(auto &a : node_pool){
+        for(auto &a : pool){
             for(auto &e : a.edge){
                 auto iter = equality_pair_map.find(e.second);
                 if(iter != equality_pair_map.end()){
