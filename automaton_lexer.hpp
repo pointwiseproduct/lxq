@@ -17,7 +17,6 @@
 #include <map>
 #include <cctype>
 #include <cstdio>
-#include "regexp_parser.hpp"
 
 namespace automaton{
     class node{
@@ -26,7 +25,7 @@ namespace automaton{
             eos = 128
         };
 
-        node() = default;
+        node();
         node(const node &other);
         node(node &&other);
         ~node() = default;
@@ -73,9 +72,36 @@ namespace automaton{
     private:
         void optimize();
 
-        node_pool node_pool;
+        node_pool pool;
         std::set<std::size_t> unused_node_set;
     };
 }
+
+namespace regexp_parser{
+    class regexp_ast{
+    public:
+        regexp_ast() = default;
+        regexp_ast(const char c);
+        regexp_ast(const regexp_ast &other);
+        regexp_ast(regexp_ast &&other);
+        virtual ~regexp_ast();
+        virtual std::size_t to_NFA(std::size_t start, ::automaton::node_pool &pool) const;
+        virtual regexp_ast *clone() const = 0;
+        template<class Derived>
+        inline regexp_ast *clone_impl() const{
+            regexp_ast *ptr = new Derived;
+            ptr->c = c;
+            for(auto &iter : node_vec){
+                ptr->node_vec.push_back(iter->clone());
+            }
+            return ptr;
+        }
+
+        char c;
+        std::vector<regexp_ast*> node_vec;
+    };
+}
+
+#include "regexp_parser.hpp"
 
 #endif // AUTOMATON_LEXER_HPP_

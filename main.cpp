@@ -1,7 +1,13 @@
 #include "scanner.hpp"
 #include "automaton_lexer.hpp"
 
-int main(int argc, char *argv[]){
+int main(/*int argc, char *argv[]*/){
+    int argc = 2;
+    const char *argv[] = {
+        "",
+        "./test/test.lxq"
+    };
+
     if(argc != 2 && argc != 3){
         std::cout << "usage: lxq ifile [ofiles_directry]" << std::endl;
         return 0;
