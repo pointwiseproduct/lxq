@@ -13,15 +13,7 @@ namespace regexp_parser{
             node_vec.push_back(iter->clone());
         }
     }
-<<<<<<< HEAD
-
     regexp_ast::regexp_ast(regexp_ast &&other) : c(std::move(other.c)), node_vec(std::move(other.node_vec)){}
-
-=======
-
-    regexp_ast::regexp_ast(regexp_ast &&other) : c(std::move(other.c)), node_vec(std::move(other.node_vec)){}
-
->>>>>>> origin/master
     regexp_ast::~regexp_ast(){
         for(auto &iter : node_vec){
             delete iter;
@@ -1114,11 +1106,7 @@ namespace automaton{
                         pool[i].token_name && !pool[j].token_name ||
                         !pool[i].token_name && pool[j].token_name ||
                         pool[i].token_name != pool[j].token_name
-<<<<<<< HEAD
                     ){
-=======
-                        ){
->>>>>>> origin/master
                         mod = inequality_pair_set.insert(std::make_pair(i, j)).second || mod;
                     }else{
                         node node_j;
